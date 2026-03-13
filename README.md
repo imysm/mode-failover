@@ -24,7 +24,15 @@
 
 ### Installation
 
-The plugin is included with OpenClaw. Enable it in `~/.openclaw/openclaw.json`:
+### Install via NPM
+
+```bash
+npm install mode-failover
+```
+
+### Configure in OpenClaw
+
+Add the plugin to your OpenClaw configuration (`~/.openclaw/openclaw.json`):
 
 ```json5
 {
@@ -45,15 +53,24 @@ The plugin is included with OpenClaw. Enable it in `~/.openclaw/openclaw.json`:
 }
 ```
 
-**Then restart gateway**:
+### Restart OpenClaw Gateway
+
 ```bash
 openclaw gateway restart
 ```
 
-**Verify**:
+### Verify Installation
+
 ```bash
 openclaw failover status
 ```
+
+**⚠️ Important**:
+- After modifying configuration, always restart the gateway
+- When disabling the plugin, delete the state file to avoid issues:
+  ```bash
+  rm -rf ~/.openclaw/mode-failover
+  ```
 
 ### Minimal Configuration
 
