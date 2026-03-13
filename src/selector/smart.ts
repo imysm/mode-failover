@@ -25,10 +25,10 @@ export class SmartSelector implements ModelSelector {
       }));
   }
 
-  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef> {
+  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef | null> {
     const candidates = this.filterCandidates(context, models);
     if (candidates.length === 0) {
-      throw new Error("No available models to select from");
+      return null;  // Return null instead of throwing error
     }
 
     // Update dynamic weights based on health
@@ -100,8 +100,12 @@ export class SmartSelector implements ModelSelector {
     return 1.0;
   }
 
-  private selectByBaseWeight(models: SmartModel[]): ModelRef {
+  private selectByBaseWeight(models: SmartModel[]): ModelRef | null {
     const totalWeight = models.reduce((sum, m) => sum + m.baseWeight, 0);
+    if (totalWeight === 0) {
+      return null;  // No models available
+    }
+
     let random = secureRandom() * totalWeight;
 
     for (const model of models) {

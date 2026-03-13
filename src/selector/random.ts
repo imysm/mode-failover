@@ -11,10 +11,10 @@ export class RandomSelector implements ModelSelector {
     this.defaultModels = config.models.filter(m => m.enabled !== false);
   }
 
-  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef> {
+  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef | null> {
     const candidates = this.filterCandidates(context, models ?? this.defaultModels);
     if (candidates.length === 0) {
-      throw new Error("No available models to select from");
+      return null;  // Return null instead of throwing error
     }
 
     const index = Math.floor(secureRandom() * candidates.length);

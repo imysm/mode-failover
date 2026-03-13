@@ -21,7 +21,7 @@ export class SelectorEngine {
     this.currentMode = config.mode;
   }
 
-  async select(context: SelectionContext, config?: ModeFailoverConfig): Promise<ModelRef> {
+  async select(context: SelectionContext, config?: ModeFailoverConfig): Promise<ModelRef | null> {
     // If config provided, use it; otherwise use current mode
     const mode = config?.mode ?? this.currentMode;
     const models = config?.models;

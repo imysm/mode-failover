@@ -12,10 +12,10 @@ export class RoundRobinSelector implements ModelSelector {
     this.currentIndex = 0;
   }
 
-  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef> {
+  async select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef | null> {
     const candidates = this.filterCandidates(context, models ?? this.defaultModels);
     if (candidates.length === 0) {
-      throw new Error("No available models to select from");
+      return null;  // Return null instead of throwing error
     }
 
     // Find the next available model

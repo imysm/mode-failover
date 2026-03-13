@@ -115,7 +115,7 @@ export type SelectorMode = "random" | "round-robin" | "weighted" | "smart";
 // -----------------------------------------------------------------------------
 
 export interface ModelSelector {
-  select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef>;
+  select(context: SelectionContext, models?: ModelRef[]): Promise<ModelRef | null>;
   reset(): void;
   updateStats?(model: ModelRef, success: boolean, latencyMs: number): void;
 }
