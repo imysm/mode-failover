@@ -1,0 +1,68 @@
+{
+  "name": "mode-failover",
+  "version": "1.0.0",
+  "description": "OpenClaw plugin for flexible model selection with random, weighted, and smart failover modes",
+  "keywords": [
+    "openclaw",
+    "plugin",
+    "failover",
+    "model-selection",
+    "load-balancing",
+    "high-availability"
+  ],
+  "homepage": "https://github.com/imysm/mode-failover#readme",
+  "bugs": {
+    "url": "https://github.com/imysm/mode-failover/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imysm/mode-failover.git"
+  },
+  "author": {
+    "name": "samyang",
+    "email": "samyang@imysm.com"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests yet\"",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.0.0"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "0.34.48",
+    "commander": "^14.0.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  }
+}
