@@ -5,6 +5,32 @@ All notable changes to the mode-failover plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-03-14
+
+### Fixed
+
+- **Null Reference Error** - Fixed crash when no healthy model available
+  - Added null check before accessing `selectedModel.ref`
+  - Returns null gracefully when all models are unhealthy
+  - Logs warning instead of crashing
+
+### Changed
+
+- **Default Model Enabled** - `enabled` defaults to `true` instead of `false`
+  - New models are enabled by default when added to config
+  - More intuitive behavior for users
+
+### Added
+
+- **clear-state CLI Command** - Clear all persistent state
+  - `openclaw failover clear-state` - Deletes state file and resets health status
+  - Useful for testing or recovering from bad state
+
+- **Persistent enable/disable** - Enable/disable now persists to config file
+  - `openclaw failover enable` - Updates runtime + config file
+  - `openclaw failover disable` - Updates runtime + config file
+  - Changes survive gateway restart
+
 ## [1.0.0] - 2026-03-13
 
 ### Added
