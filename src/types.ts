@@ -7,7 +7,7 @@ import { z } from "zod";
 export const ModelRefSchema = z.object({
   ref: z.string(),
   weight: z.number().min(0).max(100).default(50),
-  enabled: z.boolean().default(false),
+  enabled: z.boolean().default(true),  // 默认启用，而不是禁用
 });
 export type ModelRef = z.infer<typeof ModelRefSchema>;
 

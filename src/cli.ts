@@ -1,5 +1,54 @@
+import * as fs from "fs";
+import * as path from "path";
 import type { Command } from "commander";
 import type { ModeFailoverRuntime } from "./runtime.js";
+
+/**
+ * Get the OpenClaw config file path
+ */
+function getConfigPath(): string {
+  const envPath = process.env.OPENCLAW_CONFIG_PATH;
+  if (envPath) {
+    return envPath;
+  }
+  return path.join(process.env.HOME || "", ".openclaw", "openclaw.json");
+}
+
+/**
+ * Update the enabled flag in the config file
+ */
+function updateConfigEnabled(enabled: boolean): boolean {
+  try {
+    const configPath = getConfigPath();
+    if (!fs.existsSync(configPath)) {
+      console.error(`❌ Config file not found: ${configPath}`);
+      return false;
+    }
+
+    const content = fs.readFileSync(configPath, "utf-8");
+    const config = JSON.parse(content);
+
+    // Update the enabled flag
+    if (!config.plugins) {
+      config.plugins = {};
+    }
+    if (!config.plugins.entries) {
+      config.plugins.entries = {};
+    }
+    if (!config.plugins.entries["mode-failover"]) {
+      config.plugins.entries["mode-failover"] = {};
+    }
+
+    config.plugins.entries["mode-failover"].enabled = enabled;
+
+    // Write back to file
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to update config: ${error}`);
+    return false;
+  }
+}
 
 /**
  * Register CLI commands for the failover plugin
@@ -128,10 +177,21 @@ export function registerFailoverCliCommands(
 
   // reset-stats
   failover.command("reset-stats")
-    .description("Reset usage statistics")
+    .description("Reset usage statistics and health status")
     .action(() => {
       runtime.resetStats();
-      console.log("✅ Statistics reset");
+      console.log("✅ Statistics and health status reset");
+      console.log("ℹ️  All models are now considered healthy");
+      process.exit(0);
+    });
+
+  // clear-state
+  failover.command("clear-state")
+    .description("Clear persistent state (health status, sessions, etc.)")
+    .action(() => {
+      runtime.clearPersistedState();
+      console.log("✅ Persistent state cleared");
+      console.log("ℹ️  All models will start fresh on next restart");
       process.exit(0);
     });
 
@@ -140,8 +200,14 @@ export function registerFailoverCliCommands(
     .description("Enable failover plugin")
     .action(() => {
       runtime.setEnabled(true);
-      console.log("✅ Failover enabled");
-      console.log("⚠️  Note: Changes are runtime only. Update config file to persist.");
+      const updated = updateConfigEnabled(true);
+      if (updated) {
+        console.log("✅ Failover enabled");
+        console.log("✅ Config file updated");
+      } else {
+        console.log("✅ Failover enabled (runtime only)");
+        console.log("⚠️  Failed to update config file");
+      }
       process.exit(0);
     });
 
@@ -150,8 +216,14 @@ export function registerFailoverCliCommands(
     .description("Disable failover plugin")
     .action(() => {
       runtime.setEnabled(false);
-      console.log("✅ Failover disabled");
-      console.log("⚠️  Note: Changes are runtime only. Update config file to persist.");
+      const updated = updateConfigEnabled(false);
+      if (updated) {
+        console.log("✅ Failover disabled");
+        console.log("✅ Config file updated");
+      } else {
+        console.log("✅ Failover disabled (runtime only)");
+        console.log("⚠️  Failed to update config file");
+      }
       process.exit(0);
     });
 }

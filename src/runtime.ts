@@ -204,6 +204,25 @@ export class ModeFailoverRuntime {
     this.logger.info?.("Statistics reset");
   }
 
+  clearPersistedState(): void {
+    // Clear runtime health state
+    this.healthMonitor.reset();
+    this.sessionManager.clearAll();
+
+    // Delete state file
+    try {
+      const stateFile = path.join(this.stateDir, "state.json");
+      if (fs.existsSync(stateFile)) {
+        fs.unlinkSync(stateFile);
+        this.logger.info?.("State file deleted");
+      }
+    } catch (error) {
+      this.logger.error?.("Failed to delete state file", { error: String(error) });
+    }
+
+    this.logger.info?.("Persisted state cleared");
+  }
+
   clearSession(sessionKey: string): void {
     this.sessionManager.clear(sessionKey);
   }
