@@ -24,6 +24,88 @@ export function modelRefKey(ref: ModelRef | string): string {
 }
 
 // -----------------------------------------------------------------------------
+// Error Types (v1.0.5)
+// -----------------------------------------------------------------------------
+
+/**
+ * Error type classification
+ */
+export const ErrorTypeSchema = z.enum([
+  "rate_limit",      // Rate limit exceeded (429)
+  "timeout",         // Request timeout
+  "network_error",   // Network connectivity issues
+  "auth_error",      // Authentication/authorization failure (401, 403)
+  "not_found",       // Resource not found (404)
+  "server_error",    // Internal server error (5xx)
+  "invalid_request",  // Invalid request parameters (400)
+  "content_filter",  // Content policy violation
+  "unknown",         // Unknown error type
+]);
+export type ErrorType = z.infer<typeof ErrorTypeSchema>;
+
+/**
+ * Error category - determines handling strategy
+ */
+export const ErrorTypeCategorySchema = z.enum([
+  "transient",   // Temporary errors, auto-recover (rate_limit, timeout, network_error, server_error)
+  "permanent",   // Permanent errors, require manual recovery (auth_error, not_found)
+  "business",    // Business logic errors, should not disable model (invalid_request, content_filter)
+]);
+export type ErrorTypeCategory = z.infer<typeof ErrorTypeCategorySchema>;
+
+/**
+ * Error history entry
+ */
+export const ErrorHistoryEntrySchema = z.object({
+  timestamp: z.number(),
+  error: z.string(),
+  errorType: ErrorTypeSchema.default("unknown"),
+});
+export type ErrorHistoryEntry = z.infer<typeof ErrorHistoryEntrySchema>;
+
+/**
+ * Error handling configuration for specific error type
+ */
+export const ErrorHandlingRuleSchema = z.object({
+  disableDuration: z.number().min(0).default(60),  // Duration in seconds (0 = permanent)
+  maxRetries: z.number().min(0).max(10).default(3),
+  requireManualRecovery: z.boolean().default(false),
+});
+export type ErrorHandlingRule = z.infer<typeof ErrorHandlingRuleSchema>;
+
+/**
+ * Error handling configuration (v1.0.5)
+ */
+export const ErrorHandlingConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  transientErrors: z.record(z.string(), ErrorHandlingRuleSchema).default({
+    rate_limit: { disableDuration: 60, maxRetries: 3 },
+    timeout: { disableDuration: 30, maxRetries: 2 },
+    network_error: { disableDuration: 30, maxRetries: 3 },
+    server_error: { disableDuration: 120, maxRetries: 2 },
+  }),
+  permanentErrors: z.record(z.string(), ErrorHandlingRuleSchema).default({
+    auth_error: { disableDuration: 0, maxRetries: 0, requireManualRecovery: true },
+    not_found: { disableDuration: 0, maxRetries: 0, requireManualRecovery: true },
+  }),
+  ignoreErrors: z.array(z.string()).default([
+    "invalid_request",
+    "content_filter",
+  ]),
+});
+export type ErrorHandlingConfig = z.infer<typeof ErrorHandlingConfigSchema>;
+
+/**
+ * Fallback configuration (v1.0.7)
+ */
+export const FallbackConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  forceRecoveryInterval: z.number().min(1).max(3600).default(60),  // seconds
+  alwaysKeepOne: z.boolean().default(true),
+});
+export type FallbackConfig = z.infer<typeof FallbackConfigSchema>;
+
+// -----------------------------------------------------------------------------
 // Selection Context
 // -----------------------------------------------------------------------------
 
@@ -51,6 +133,11 @@ export const ModelHealthStatsSchema = z.object({
   lastErrorAt: z.number().optional(),
   lastSuccessAt: z.number().optional(),
   status: ModelHealthStatusSchema.default("healthy"),
+  // New in v1.0.5
+  lastErrorType: ErrorTypeSchema.optional(),
+  disabledAt: z.number().optional(),
+  disabledUntil: z.number().optional(),
+  disableReason: ErrorTypeSchema.optional(),
 });
 export type ModelHealthStats = z.infer<typeof ModelHealthStatsSchema>;
 
@@ -138,6 +225,10 @@ export const FailoverConfigSchema = z.object({
   cooldownMinutes: z.number().min(1).max(1440).default(30),
   recoveryProbeInterval: z.number().min(1).max(60).default(5),
   timeoutMs: z.number().min(5000).max(300000).default(30000), // 30 seconds timeout
+  // New in v1.0.5
+  errorHandling: ErrorHandlingConfigSchema.optional(),
+  // New in v1.0.7
+  fallback: FallbackConfigSchema.optional(),
 });
 export type FailoverConfig = z.infer<typeof FailoverConfigSchema>;
 

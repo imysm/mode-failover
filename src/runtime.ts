@@ -227,6 +227,14 @@ export class ModeFailoverRuntime {
     this.sessionManager.clear(sessionKey);
   }
 
+  /**
+   * Manually recover a disabled model (v1.0.5)
+   */
+  recoverModel(modelRef: string): boolean {
+    const model: ModelRef = { ref: modelRef, weight: 0, enabled: true };
+    return this.healthMonitor.recover(model);
+  }
+
   async restoreState(): Promise<void> {
     try {
       const stateFile = path.join(this.stateDir, "state.json");

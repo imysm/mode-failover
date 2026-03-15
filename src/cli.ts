@@ -185,6 +185,20 @@ export function registerFailoverCliCommands(
       process.exit(0);
     });
 
+  // recover (v1.0.5)
+  failover.command("recover <model-ref>")
+    .description("Manually recover a disabled model (v1.0.5)")
+    .action((modelRef: string) => {
+      const recovered = runtime.recoverModel(modelRef);
+      if (recovered) {
+        console.log(`✅ Model recovered: ${modelRef}`);
+        console.log("ℹ️  Model is now available for selection");
+      } else {
+        console.log(`⚠️  Model not found in health monitor: ${modelRef}`);
+      }
+      process.exit(0);
+    });
+
   // clear-state
   failover.command("clear-state")
     .description("Clear persistent state (health status, sessions, etc.)")

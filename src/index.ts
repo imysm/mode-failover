@@ -53,11 +53,6 @@ const modeFailoverPlugin = {
       return;
     }
 
-    const healthMonitor = new HealthMonitor(cfg.failover);
-    const sessionManager = new SessionManager(cfg.stickiness);
-    const statsCollector = new StatsCollector(cfg.stats);
-    const selectorEngine = new SelectorEngine(cfg, healthMonitor);
-
     // Wrap logger to match runtime expectations
     const runtimeLogger = {
       debug: (msg: string, data?: Record<string, unknown>) => {
@@ -75,6 +70,11 @@ const modeFailoverPlugin = {
         logger.error(data ? `${msg} ${JSON.stringify(data)}` : msg);
       },
     };
+
+    const healthMonitor = new HealthMonitor(cfg.failover, runtimeLogger);
+    const sessionManager = new SessionManager(cfg.stickiness);
+    const statsCollector = new StatsCollector(cfg.stats);
+    const selectorEngine = new SelectorEngine(cfg, healthMonitor);
 
     const runtime = new ModeFailoverRuntime({
       configManager,

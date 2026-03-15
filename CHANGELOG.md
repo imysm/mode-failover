@@ -5,6 +5,51 @@ All notable changes to the mode-failover plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-03-15
+
+### Added
+
+- **Error Classification** - Categorize errors for smarter handling
+  - Error types: `rate_limit`, `timeout`, `network_error`, `auth_error`, `not_found`, `server_error`, `invalid_request`, `content_filter`, `unknown`
+  - Error categories: `transient` (auto-recover), `permanent` (manual recovery), `business` (no disable)
+  - Recognizes HTTP status codes and error message patterns
+  - Business errors (invalid_request, content_filter) don't disable models
+
+- **Dedicated Error Handling Configuration** - Fine-grained control over error behavior
+  - `failover.errorHandling.enabled` - Enable new error classification (default: false)
+  - `failover.errorHandling.transientErrors` - Configurable disable duration per error type
+  - `failover.errorHandling.permanentErrors` - Permanent disable with manual recovery required
+  - `failover.errorHandling.ignoreErrors` - List of error types to ignore
+
+- **Manual Recovery CLI** - Manually recover disabled models
+  - `openclaw failover recover <model-ref>` - Recover a permanently disabled model
+  - Useful after fixing auth errors or API issues
+
+- **Enhanced Logging** - More detailed error information
+  - Logs error type when disabling models
+  - Shows disable duration and recovery command for permanent errors
+  - Distinguishes between legacy failover and error-based disable
+
+- **Error History Tracking** - Track errors with types
+  - Error history now includes error type classification
+  - Better diagnostics and troubleshooting
+
+### Changed
+
+- **HealthMonitor API** - Added logger parameter for better logging
+  - Constructor now accepts optional logger parameter
+  - Improved error messages and debug output
+
+- **Error Handling Priority** - New classification takes precedence
+  - When `errorHandling.enabled` is true, error classification is used
+  - Falls back to legacy failover when disabled (backward compatible)
+
+### Fixed
+
+- **Improved Error Recognition** - More accurate error type detection
+  - Better pattern matching for various error messages
+  - HTTP status code classification for faster detection
+
 ## [1.0.3] - 2026-03-14
 
 ### Fixed
