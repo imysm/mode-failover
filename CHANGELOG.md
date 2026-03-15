@@ -5,6 +5,27 @@ All notable changes to the mode-failover plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-03-15
+
+### Added
+
+- **Auto-Recovery Mechanism** - Automatically recover models from transient errors
+  - Periodic cleanup task checks for expired disable periods
+  - Auto-recovers models after configured disable duration
+  - Only recovers transient errors (not permanent auth errors)
+  - Logs auto-recovery events with error type and duration
+
+- **Recovery Diagnostics** - Better visibility into recovery process
+  - Logs when models are auto-recovered
+  - Shows error type and disable duration
+  - Helps diagnose recovery patterns
+
+### Changed
+
+- **Cleanup Interval** - Default cleanup runs every hour
+  - Auto-recovery runs during cleanup cycle
+  - Configurable via `startCleanup(intervalMs)` parameter
+
 ## [1.0.5] - 2026-03-15
 
 ### Added

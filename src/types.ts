@@ -78,16 +78,8 @@ export type ErrorHandlingRule = z.infer<typeof ErrorHandlingRuleSchema>;
  */
 export const ErrorHandlingConfigSchema = z.object({
   enabled: z.boolean().default(false),
-  transientErrors: z.record(z.string(), ErrorHandlingRuleSchema).default({
-    rate_limit: { disableDuration: 60, maxRetries: 3 },
-    timeout: { disableDuration: 30, maxRetries: 2 },
-    network_error: { disableDuration: 30, maxRetries: 3 },
-    server_error: { disableDuration: 120, maxRetries: 2 },
-  }),
-  permanentErrors: z.record(z.string(), ErrorHandlingRuleSchema).default({
-    auth_error: { disableDuration: 0, maxRetries: 0, requireManualRecovery: true },
-    not_found: { disableDuration: 0, maxRetries: 0, requireManualRecovery: true },
-  }),
+  transientErrors: z.record(z.string(), ErrorHandlingRuleSchema),
+  permanentErrors: z.record(z.string(), ErrorHandlingRuleSchema),
   ignoreErrors: z.array(z.string()).default([
     "invalid_request",
     "content_filter",

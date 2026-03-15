@@ -288,8 +288,57 @@ export class ModeFailoverRuntime {
     this.cleanupTimer = setInterval(() => {
       const sessionCleaned = this.sessionManager.cleanup();
       const statsCleaned = this.statsCollector.cleanup();
-      this.logger.debug?.("Cleanup completed", { sessionCleaned, statsCleaned });
+
+      // v1.0.6: Auto-recovery for transient errors
+      const autoRecovered = this.autoRecoverModels();
+
+      this.logger.debug?.("Cleanup completed", { sessionCleaned, statsCleaned, autoRecovered });
     }, intervalMs);
+  }
+
+  /**
+   * Auto-recover models whose disable period has expired (v1.0.6)
+   */
+  private autoRecoverModels(): number {
+    const config = this.configManager.get();
+
+    // Only auto-recover if error handling is enabled
+    if (!config.failover.errorHandling?.enabled) {
+      return 0;
+    }
+
+    let recoveredCount = 0;
+    const now = Date.now();
+
+    for (const model of config.models) {
+      const stats = this.healthMonitor.getStats(model);
+
+      // Check if model is temporarily disabled
+      if (stats.disabledUntil && stats.disabledUntil > 0) {
+        // Check if disable period has expired
+        if (now >= stats.disabledUntil) {
+          // Only auto-recover transient errors (not permanent)
+          if (stats.disableReason) {
+            const isPermanent = this.healthMonitor.getCooldownInfo(model).reason !== null &&
+              this.healthMonitor.getCooldownInfo(model).remainingMs === 0;
+
+            if (!isPermanent) {
+              // Auto-recover the model
+              this.healthMonitor.recover(model);
+              recoveredCount++;
+
+              this.logger.info?.("Model auto-recovered", {
+                model: model.ref,
+                errorType: stats.disableReason,
+                disabledDurationMs: stats.disabledUntil - (stats.disabledAt || now),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return recoveredCount;
   }
 
   stopCleanup(): void {
