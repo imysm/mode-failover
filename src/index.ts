@@ -42,7 +42,7 @@ const modeFailoverPlugin = {
   description: "Flexible model selection with random, weighted, and smart failover modes",
   configSchema: modeFailoverConfigSchema,
 
-  async register(api: OpenClawPluginApi): Promise<void> {
+  register(api: OpenClawPluginApi): void {
     const { pluginConfig, logger } = api;
 
     const configManager = new ConfigManager(pluginConfig);
