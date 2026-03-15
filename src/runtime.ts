@@ -91,10 +91,31 @@ export class ModeFailoverRuntime {
       }
 
       // Select using the configured strategy
-      const selectedModel = await this.selectorEngine.select({
+      let selectedModel = await this.selectorEngine.select({
         ...context,
         excludeModels: excludeModels.length > 0 ? excludeModels : undefined,
       }, config);
+
+      // v1.0.7: Fallback strategy - always keep at least one model available
+      if (!selectedModel && config.failover.fallback?.enabled) {
+        // Get all enabled models, sorted by weight (descending)
+        const allEnabledModels = config.models
+          .filter(m => m.enabled && m.weight > 0)
+          .sort((a, b) => b.weight - a.weight);
+
+        if (allEnabledModels.length > 0) {
+          // Fallback: select the highest-weight model
+          selectedModel = allEnabledModels[0];
+
+          this.logger.warn?.("Fallback triggered - selected highest-weight model (all models unhealthy)", {
+            sessionKey: context.sessionKey,
+            agentId: context.agentId,
+            selectedModel: selectedModel.ref,
+            excludedModels: excludeModels.length,
+            weight: selectedModel.weight,
+          });
+        }
+      }
 
       // Set session binding
       this.sessionManager.setModel(context.sessionKey, selectedModel);
@@ -292,8 +313,44 @@ export class ModeFailoverRuntime {
       // v1.0.6: Auto-recovery for transient errors
       const autoRecovered = this.autoRecoverModels();
 
+      // v1.0.7: Force recovery if all models are unhealthy
+      this.forceRecoveryIfAllUnhealthy();
+
       this.logger.debug?.("Cleanup completed", { sessionCleaned, statsCleaned, autoRecovered });
     }, intervalMs);
+  }
+
+  /**
+   * Force recovery if all models are unhealthy (v1.0.7)
+   */
+  private forceRecoveryIfAllUnhealthy(): void {
+    const config = this.configManager.get();
+
+    // Only force recover if fallback is enabled
+    if (!config.failover.fallback?.enabled) {
+      return;
+    }
+
+    const allModels = config.models.filter(m => m.enabled);
+
+    // Check if all models are unhealthy
+    const allUnhealthy = allModels.every(m => !this.healthMonitor.isHealthy(m));
+
+    if (!allUnhealthy) {
+      return;
+    }
+
+    // Force recover the highest-weight model
+    const sortedModels = [...allModels].sort((a, b) => b.weight - a.weight);
+    const topModel = sortedModels[0];
+
+    this.healthMonitor.recover(topModel);
+
+    this.logger.warn?.("Force recovery triggered - all models were unhealthy", {
+      model: topModel.ref,
+      weight: topModel.weight,
+      reason: "fallback.alwaysKeepOne enabled",
+    });
   }
 
   /**

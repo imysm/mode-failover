@@ -98,6 +98,12 @@ export class ConfigManager {
               },
           ignoreErrors: Array.isArray(errorHandlingInput.ignoreErrors) ? errorHandlingInput.ignoreErrors : ["invalid_request", "content_filter"],
         },
+        // v1.0.7: Fallback defaults
+        fallback: {
+          enabled: true,
+          forceRecoveryInterval: 60,
+          alwaysKeepOne: true,
+        },
       },
       stats: {
         enabled: false,

@@ -5,6 +5,45 @@ All notable changes to the mode-failover plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-03-15
+
+### Added
+
+- **Fallback Strategy** - Always keep at least one model available
+  - `failover.fallback.enabled` - Enable fallback strategy (default: true)
+  - `failover.fallback.alwaysKeepOne` - Ensure at least one model is always available
+  - When all models are unhealthy, automatically select the highest-weight model
+  - Prevents system paralysis during rate limit storms
+
+- **Force Recovery Mechanism** - Auto-recover models when all are unhealthy
+  - Periodic check during cleanup cycle
+  - If all models are unhealthy, force recover the highest-weight model
+  - Ensures system continues to operate even during widespread issues
+  - Logs warning when force recovery is triggered
+
+- **Enhanced Fallback Logging** - Better visibility into fallback actions
+  - Logs when fallback is triggered
+  - Shows excluded models count and selected model
+  - Displays weight of selected model
+  - Helps diagnose system behavior during outages
+
+### Changed
+
+- **Model Selection Logic** - Fallback is always enabled by default
+  - Even without error handling enabled, fallback ensures availability
+  - Configurable via `failover.fallback.enabled` setting
+
+- **Cleanup Task** - Enhanced with force recovery check
+  - Now checks for auto-recovery and force recovery
+  - Single cleanup cycle handles both tasks
+
+### Security
+
+- **System Resilience** - Prevents total system failure
+  - Even if all models experience errors, one will be kept available
+  - Rate limit storms no longer paralyze the entire system
+  - Ensures continuous service during issues
+
 ## [1.0.6] - 2026-03-15
 
 ### Added
